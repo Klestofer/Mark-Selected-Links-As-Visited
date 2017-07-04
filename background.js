@@ -1,10 +1,16 @@
 'use strict';
 const l = console.log;
-const MENU_ID = '1';
+
+const MenuId = {
+  TOGGLE_LINK_VISIT_STATE: '1',
+  MARK_LINKS_IN_SELECTION: '2',
+};
+
+
 
 
 chrome.browserAction.onClicked.addListener(function(tab) {
-  chrome.tabs.executeScript({file: 'content.js'});
+  execScript();
 });
 
 
@@ -20,9 +26,9 @@ chrome.runtime.onMessage.addListener(function(msg) {
 
 
 chrome.contextMenus.create({
-  title: 'Toggle visit state',
+  title: 'Toggle link visit state',
   contexts: [ 'link' ],
-  id: MENU_ID
+  id: MenuId.TOGGLE_LINK_VISIT_STATE,
 }, function () { l('context menu created') });
 
 
@@ -31,7 +37,29 @@ chrome.contextMenus.create({
 chrome.contextMenus.onClicked.addListener(function(info, tab) {
   l('contextMenus.onClicked()', info, tab);
 
-  const url = info.linkUrl;
+  switch(info.menuItemId) {
+    case MenuId.TOGGLE_LINK_VISIT_STATE:
+      toggleUrlVisitState(info.linkUrl);
+    break;
+
+
+    case MenuId.MARK_LINKS_IN_SELECTION:
+      execScript();
+    break;
+  }
+});
+
+
+
+
+function execScript() {
+  chrome.tabs.executeScript({file: 'content.js'});
+}
+
+
+
+
+function toggleUrlVisitState(url) {
   chrome.history.getVisits({ url }, function({ length }) {
     l(length);
 
@@ -44,4 +72,14 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
       chrome.history.deleteUrl({ url });
     }
   })
-});
+
+}
+
+
+
+
+chrome.contextMenus.create({
+  title: 'Mark links in selection',
+  contexts: [ 'selection' ],
+  id: MenuId.MARK_LINKS_IN_SELECTION,
+}, function () { l('context menu created') });
